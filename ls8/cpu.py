@@ -127,7 +127,7 @@ class CPU:
         self.reg[self.SP] += 1                        # increment the Stack Pointer
         self.pc += 2
 
-    def  handle_CALL(self, op_a, op_b):
+    def handle_CALL(self, op_a, op_b):
         self.reg[self.SP] -= 1                        # decrement the SP
         self.ram[self.reg[self.SP]] = self.pc + 2     # store, on to the Stack, the instruction to return to after the CALL
         self.pc = self.reg[op_a]                      # set the PC to the given value
@@ -137,22 +137,26 @@ class CPU:
         self.reg[self.SP] += 1                        # Increment the SP
         self.pc = return_address                      # Set PC to the return address
 
+    def handle_JMP(self, op_a, op_b):
+        self.pc = self.reg[op_a]                      # set the PC to the given value
+
 
 
     def run(self):
         """Run the CPU."""
         self.running = True
 
-        LDI =  130    # Load Instruction
+        HLT =  1      # Halt
+        RET =  17     # Retrun Instruction
         PUSH = 69     # PUSH to stack
         POP =  70     # POP off stack
         PRN =  71     # Print Instruction
-        MUL =  162    # Multiply Instruction
-        ADD =  160    # Add Instruction
-        CMP =  167    # Compare Instruction
-        HLT =  1      # Halt
         CALL = 80     # Call Instruction
-        RET =  17     # Retrun Instruction
+        JMP =  84     # Jump Instruction
+        LDI =  130    # Load Instruction
+        ADD =  160    # Add Instruction
+        MUL =  162    # Multiply Instruction
+        CMP =  167    # Compare Instruction
 
         self.branchtable[LDI] = self.handle_LDI   ###\
         self.branchtable[PUSH] = self.handle_PUSH    #\
@@ -160,8 +164,9 @@ class CPU:
         self.branchtable[PRN] = self.handle_PRN        #\    
         self.branchtable[ADD] = self.handle_ADD         #\
         self.branchtable[CMP] = self.handle_CMP           #----- Set handlers to corresponding Instruction call
-        self.branchtable[MUL] = self.handle_MUL        #/
-        self.branchtable[HLT] = self.handle_HLT       #/
+        self.branchtable[MUL] = self.handle_MUL         #/
+        self.branchtable[HLT] = self.handle_HLT        #/
+        self.branchtable[JMP] = self.handle_JMP       #/
         self.branchtable[CALL] = self.handle_CALL    #/
         self.branchtable[RET] = self.handle_RET   ###/
 
