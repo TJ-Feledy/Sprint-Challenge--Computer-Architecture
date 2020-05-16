@@ -11,7 +11,7 @@ class CPU:
         self.reg = [0] * 8                     # Create registers
         self.pc = 0                            # Program counter for reading instructions
         self.SP = 7                            # register location for top of stack
-        self.fl = 0b00000000   # 00000LGE      # Flag for CMP instruction
+        self.fl = 0b00000000   # 00000LGE      # Flag for Compare(CMP) instruction
         self.reg[self.SP] = len(self.ram) - 1  # store top of stack in register 7
         self.branchtable = {}                  # Create storage for Instruction Handlers
         self.running = False                   # Create CPU state
@@ -55,9 +55,12 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+
         #elif op == "SUB": etc
+
         elif op == 'MUL':
             self.reg[reg_a] *= self.reg[reg_b]
+            
         elif op == 'CMP':
             if self.reg[reg_a] == self.reg[reg_b]:
                 self.fl = 0b00000001                    # E flag
@@ -65,6 +68,35 @@ class CPU:
                 self.fl = 0b00000010                    # G flag
             elif self.reg[reg_a] < self.reg[reg_b]:
                 self.fl = 0b00000100                    # L flag
+
+        elif op == 'MOD':
+            if reg_b == 0:
+                print('Can\'t divide by 0')
+                self.running = False
+            else:
+                self.reg[reg_a] %= self.reg[reg_b]
+
+               ### Bitwise Operators ###
+        #-------------------------------------#
+        elif op == 'AND':
+            self.reg[reg_a] &= self.reg[reg_b]
+
+        elif op == 'OR':
+            self.reg[reg_a] |= self.reg[reg_b]
+
+        elif op == 'XOR':
+            self.reg[reg_a] ^= self.reg[reg_b]
+
+        elif op == 'NOT':
+            self.reg[reg_a] = ~self.reg[reg_a]
+
+        elif op == 'SHL':
+            self.reg[reg_a] <<= reg_b
+
+        elif op == 'SHR':
+            self.reg[reg_a] >>= reg_b
+        #-------------------------------------#
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -89,6 +121,44 @@ class CPU:
         print()
 
 
+         ### ALU Operations ###
+    #-------------------------------#
+    def handle_MUL(self, op_a, op_b):
+        self.alu('MUL', op_a, op_b)
+        self.pc += 3
+
+    def handle_ADD(self, op_a, op_b):
+        self.alu('ADD', op_a, op_b)
+        self.pc += 3
+
+    def handle_AND(self, op_a, op_b):
+        self.alu('AND', op_a, op_b)
+        self.pc += 3
+
+    def handle_OR(self, op_a, op_b):
+        self.alu('OR', op_a, op_b)
+        self.pc += 3
+
+    def handle_XOR(self, op_a, op_b):
+        self.alu('XOR', op_a, op_b)
+        self.pc += 3
+
+    def handle_NOT(self, op_a, op_b):
+        self.alu('NOT', op_a, op_b)
+        self.pc += 2
+
+    def handle_SHL(self, op_a, op_b):
+        self.alu('SHL', op_a, op_b)
+        self.pc += 3
+
+    def handle_SHR(self, op_a, op_b):
+        self.alu('SHR', op_a, op_b)
+        self.pc += 3
+
+    def handle_MOD(self, op_a, op_b):
+        self.alu('MOD', op_a, op_b)
+        self.pc += 3
+    #-------------------------------#
 
     def handle_LDI(self, op_a, op_b):
         self.reg[op_a] = op_b                         # Save the value at given address
@@ -98,14 +168,6 @@ class CPU:
         value = self.reg[op_a]
         print(value)                                  # Print from given address
         self.pc += 2
-
-    def handle_MUL(self, op_a, op_b):
-        self.alu('MUL', op_a, op_b)
-        self.pc += 3
-
-    def handle_ADD(self, op_a, op_b):
-        self.alu('ADD', op_a, op_b)
-        self.pc += 3
 
     def handle_CMP(self, op_a, op_b):
         self.alu('CMP', op_a, op_b)
@@ -159,7 +221,7 @@ class CPU:
         self.running = True
 
         HLT =  1      # Halt
-        RET =  17     # Retrun Instruction
+        RET =  17     # Return Instruction
         PUSH = 69     # PUSH to stack
         POP =  70     # POP off stack
         PRN =  71     # Print Instruction
@@ -168,23 +230,43 @@ class CPU:
         JEQ =  85     # Jump if Equal Instruction
         JNE =  86     # Jump if Not Equal Instruction
         LDI =  130    # Load Instruction
+
         ADD =  160    # Add Instruction
         MUL =  162    # Multiply Instruction
+        MOD =  164    # Modulus Instruction
         CMP =  167    # Compare Instruction
 
-        self.branchtable[LDI] = self.handle_LDI   ###\
-        self.branchtable[PUSH] = self.handle_PUSH    #\
-        self.branchtable[POP] = self.handle_POP       #\
-        self.branchtable[PRN] = self.handle_PRN        #\    
-        self.branchtable[ADD] = self.handle_ADD         #\
-        self.branchtable[CMP] = self.handle_CMP          #\
-        self.branchtable[MUL] = self.handle_MUL           #----- Set handlers to corresponding Instruction call
-        self.branchtable[HLT] = self.handle_HLT          #/
-        self.branchtable[JMP] = self.handle_JMP         #/
-        self.branchtable[JEQ] = self.handle_JEQ        #/
-        self.branchtable[JNE] = self.handle_JNE       #/
-        self.branchtable[CALL] = self.handle_CALL    #/
-        self.branchtable[RET] = self.handle_RET   ###/
+        NOT =  105    # Bitwise NOT
+        AND =  168    # Bitwise AND
+        OR =   170    # Bitwise OR
+        XOR =  171    # Bitwise XOR
+        SHL =  172    # Bitwise Shift Left
+        SHR =  173    # Bitwise Shift Right
+
+
+        self.branchtable[LDI]  = self.handle_LDI    ###\
+        self.branchtable[PUSH] = self.handle_PUSH      #\
+        self.branchtable[POP]  = self.handle_POP        #\
+        self.branchtable[PRN]  = self.handle_PRN         #\    
+        self.branchtable[ADD]  = self.handle_ADD          #\
+        self.branchtable[AND]  = self.handle_AND           #\
+        self.branchtable[OR]   = self.handle_OR             #\
+        self.branchtable[XOR]  = self.handle_XOR             #\
+        self.branchtable[NOT]  = self.handle_NOT              #\
+        self.branchtable[SHL]  = self.handle_SHL               #\
+        self.branchtable[SHR]  = self.handle_SHR               #/  ----- Set handlers to corresponding Instruction call
+        self.branchtable[MOD]  = self.handle_MOD              #/
+        self.branchtable[CMP]  = self.handle_CMP             #/
+        self.branchtable[MUL]  = self.handle_MUL            #/
+        self.branchtable[HLT]  = self.handle_HLT           #/
+        self.branchtable[JMP]  = self.handle_JMP          #/
+        self.branchtable[JEQ]  = self.handle_JEQ         #/
+        self.branchtable[JNE]  = self.handle_JNE        #/
+        self.branchtable[CALL] = self.handle_CALL      #/
+        self.branchtable[RET]  = self.handle_RET    ###/
+
+
+
 
         while self.running:
             # break
