@@ -146,6 +146,12 @@ class CPU:
         else:
             self.pc += 2
 
+    def handle_JNE(self, op_a, op_b):
+        if self.fl != 0b00000001:                     # if flag is not set to Equal
+            self.pc = self.reg[op_a]                  # set the PC to the value at given address
+        else:
+            self.pc += 2
+
 
 
     def run(self):
@@ -160,6 +166,7 @@ class CPU:
         CALL = 80     # Call Instruction
         JMP =  84     # Jump Instruction
         JEQ =  85     # Jump if Equal Instruction
+        JNE =  86     # Jump if Not Equal Instruction
         LDI =  130    # Load Instruction
         ADD =  160    # Add Instruction
         MUL =  162    # Multiply Instruction
@@ -170,11 +177,12 @@ class CPU:
         self.branchtable[POP] = self.handle_POP       #\
         self.branchtable[PRN] = self.handle_PRN        #\    
         self.branchtable[ADD] = self.handle_ADD         #\
-        self.branchtable[CMP] = self.handle_CMP            #----- Set handlers to corresponding Instruction call
-        self.branchtable[MUL] = self.handle_MUL          #/
-        self.branchtable[HLT] = self.handle_HLT         #/
-        self.branchtable[JMP] = self.handle_JMP        #/
-        self.branchtable[JEQ] = self.handle_JEQ       #/
+        self.branchtable[CMP] = self.handle_CMP          #\
+        self.branchtable[MUL] = self.handle_MUL           #----- Set handlers to corresponding Instruction call
+        self.branchtable[HLT] = self.handle_HLT          #/
+        self.branchtable[JMP] = self.handle_JMP         #/
+        self.branchtable[JEQ] = self.handle_JEQ        #/
+        self.branchtable[JNE] = self.handle_JNE       #/
         self.branchtable[CALL] = self.handle_CALL    #/
         self.branchtable[RET] = self.handle_RET   ###/
 
