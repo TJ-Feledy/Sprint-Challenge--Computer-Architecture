@@ -7,14 +7,14 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [0] * 256                   # Create memory
-        self.reg = [0] * 8                     # Create registers
-        self.pc = 0                            # Program counter for reading instructions
-        self.SP = 7                            # register location for top of stack
-        self.fl = 0b00000000   # 00000LGE      # Flag for Compare(CMP) instruction
-        self.reg[self.SP] = len(self.ram) - 1  # store top of stack in register 7
-        self.branchtable = {}                  # Create storage for Instruction Handlers
-        self.running = False                   # Create CPU state
+        self.ram = [0] * 256                        # Create memory
+        self.reg = [0] * 8                          # Create registers
+        self.pc = 0                                 # Program counter for reading instructions
+        self.SP = 7                                 # register location for top of stack
+        self.fl = 0b00000000   # 00000LGE           # Flag for Compare(CMP) instruction
+        self.reg[self.SP] = len(self.ram) - 1       # store top of stack in register 7
+        self.branchtable = {}                       # Create storage for Instruction Handlers
+        self.running = False                        # Create CPU state
 
 
     def ram_read(self, MAR):
@@ -27,7 +27,7 @@ class CPU:
         """Load a program into memory."""
         address = 0
 
-        if len(program) != 2:   # check for second argument from command line
+        if len(program) != 2:                       # check for second argument from command line
             print('need proper filename passed')
             sys.exit(1)
 
@@ -35,18 +35,16 @@ class CPU:
 
         with open(filename) as f:
             for line in f:
-                # print(line)
-                if line == '\n' or line == '':    # skip empty lines
+                if line == '\n' or line == '':      # skip empty lines
                     continue
-                if line[0] == '#':  # skip lines that are comments
+                if line[0] == '#':                  # skip lines that are comments
                     continue
                 
-                comment_split = line.split('#')  # everything before (#) and everything after
+                comment_split = line.split('#')     # everything before (#) and everything after
 
-                num = comment_split[0].strip()   # save everything before (#) to num variable
+                num = comment_split[0].strip()      # save everything before (#) to num variable
 
-                self.ram[address] = int(num,2)   # convert binary to int, and save to memory
-                # print(int(num,2))
+                self.ram[address] = int(num,2)      # convert binary to int, and save to memory
                 address += 1
 
 
@@ -108,7 +106,7 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.pc,
-            #self.fl,
+            self.fl,
             #self.ie,
             self.ram_read(self.pc),
             self.ram_read(self.pc + 1),
@@ -158,6 +156,10 @@ class CPU:
     def handle_MOD(self, op_a, op_b):
         self.alu('MOD', op_a, op_b)
         self.pc += 3
+
+    def handle_CMP(self, op_a, op_b):
+        self.alu('CMP', op_a, op_b)
+        self.pc += 3
     #-------------------------------#
 
     def handle_LDI(self, op_a, op_b):
@@ -168,10 +170,6 @@ class CPU:
         value = self.reg[op_a]
         print(value)                                  # Print from given address
         self.pc += 2
-
-    def handle_CMP(self, op_a, op_b):
-        self.alu('CMP', op_a, op_b)
-        self.pc += 3
 
     def handle_HLT(self, op_a, op_b):
         self.running = False                          # Stop the loop/end program
@@ -269,16 +267,15 @@ class CPU:
 
 
         while self.running:
-            # break
 
-            IR = self.ram_read(self.pc)             # Instruction Register
+            IR = self.ram_read(self.pc)                     # Instruction Register
             operand_a = self.ram_read(self.pc+1)
             operand_b = self.ram_read(self.pc+2)
 
-            if IR in self.branchtable:              # If the instruction is in branchtable, call the handler
+            if IR in self.branchtable:                      # If the instruction is in branchtable, call the handler
                 self.branchtable[IR](operand_a, operand_b)
 
             else:
-                # if command is not recognizable
+                                                            # if command is not recognizable
                 print(f"Unknown instruction {IR}")
-                sys.exit(1)    # Terminate program with error
+                sys.exit(1)                                 # Terminate program with error
