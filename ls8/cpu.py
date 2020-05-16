@@ -11,7 +11,7 @@ class CPU:
         self.reg = [0] * 8                     # Create registers
         self.pc = 0                            # Program counter for reading instructions
         self.SP = 7                            # register location for top of stack
-        self.FL = 0b00000000   # 00000LGE      # Flag for CMP instruction
+        self.fl = 0b00000000   # 00000LGE      # Flag for CMP instruction
         self.reg[self.SP] = len(self.ram) - 1  # store top of stack in register 7
         self.branchtable = {}                  # Create storage for Instruction Handlers
         self.running = False                   # Create CPU state
@@ -60,11 +60,11 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == 'CMP':
             if self.reg[reg_a] == self.reg[reg_b]:
-                self.FL = 0b00000001                    # E flag
+                self.fl = 0b00000001                    # E flag
             elif self.reg[reg_a] > self.reg[reg_b]:
-                self.FL = 0b00000010                    # G flag
+                self.fl = 0b00000010                    # G flag
             elif self.reg[reg_a] < self.reg[reg_b]:
-                self.FL = 0b00000100                    # L flag
+                self.fl = 0b00000100                    # L flag
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -138,7 +138,13 @@ class CPU:
         self.pc = return_address                      # Set PC to the return address
 
     def handle_JMP(self, op_a, op_b):
-        self.pc = self.reg[op_a]                      # set the PC to the given value
+        self.pc = self.reg[op_a]                      # set the PC to the value at given address
+
+    def handle_JEQ(self, op_a, op_b):
+        if self.fl == 0b00000001:                     # if flag is set to Equal
+            self.pc = self.reg[op_a]                  # set the PC to the value at given address
+        else:
+            self.pc += 2
 
 
 
@@ -153,6 +159,7 @@ class CPU:
         PRN =  71     # Print Instruction
         CALL = 80     # Call Instruction
         JMP =  84     # Jump Instruction
+        JEQ =  85     # Jump if Equal Instruction
         LDI =  130    # Load Instruction
         ADD =  160    # Add Instruction
         MUL =  162    # Multiply Instruction
@@ -163,10 +170,11 @@ class CPU:
         self.branchtable[POP] = self.handle_POP       #\
         self.branchtable[PRN] = self.handle_PRN        #\    
         self.branchtable[ADD] = self.handle_ADD         #\
-        self.branchtable[CMP] = self.handle_CMP           #----- Set handlers to corresponding Instruction call
-        self.branchtable[MUL] = self.handle_MUL         #/
-        self.branchtable[HLT] = self.handle_HLT        #/
-        self.branchtable[JMP] = self.handle_JMP       #/
+        self.branchtable[CMP] = self.handle_CMP            #----- Set handlers to corresponding Instruction call
+        self.branchtable[MUL] = self.handle_MUL          #/
+        self.branchtable[HLT] = self.handle_HLT         #/
+        self.branchtable[JMP] = self.handle_JMP        #/
+        self.branchtable[JEQ] = self.handle_JEQ       #/
         self.branchtable[CALL] = self.handle_CALL    #/
         self.branchtable[RET] = self.handle_RET   ###/
 
