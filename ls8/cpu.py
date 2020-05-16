@@ -11,6 +11,7 @@ class CPU:
         self.reg = [0] * 8                     # Create registers
         self.pc = 0                            # Program counter for reading instructions
         self.SP = 7                            # register location for top of stack
+        self.FL = 0b00000000   # 00000LGE      # Flag for CMP instruction
         self.reg[self.SP] = len(self.ram) - 1  # store top of stack in register 7
         self.branchtable = {}                  # Create storage for Instruction Handlers
         self.running = False                   # Create CPU state
@@ -57,6 +58,13 @@ class CPU:
         #elif op == "SUB": etc
         elif op == 'MUL':
             self.reg[reg_a] *= self.reg[reg_b]
+        elif op == 'CMP':
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.FL = 0b00000001                    # E flag
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.FL = 0b00000010                    # G flag
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.FL = 0b00000100                    # L flag
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -99,6 +107,10 @@ class CPU:
         self.alu('ADD', op_a, op_b)
         self.pc += 3
 
+    def handle_CMP(self, op_a, op_b):
+        self.alu('CMP', op_a, op_b)
+        self.pc += 3
+
     def handle_HLT(self, op_a, op_b):
         self.running = False                          # Stop the loop/end program
         self.pc += 1
@@ -137,6 +149,7 @@ class CPU:
         PRN =  71     # Print Instruction
         MUL =  162    # Multiply Instruction
         ADD =  160    # Add Instruction
+        CMP =  167    # Compare Instruction
         HLT =  1      # Halt
         CALL = 80     # Call Instruction
         RET =  17     # Retrun Instruction
@@ -145,7 +158,8 @@ class CPU:
         self.branchtable[PUSH] = self.handle_PUSH    #\
         self.branchtable[POP] = self.handle_POP       #\
         self.branchtable[PRN] = self.handle_PRN        #\    
-        self.branchtable[ADD] = self.handle_ADD          #----- Set handlers to corresponding Instruction call    
+        self.branchtable[ADD] = self.handle_ADD         #\
+        self.branchtable[CMP] = self.handle_CMP           #----- Set handlers to corresponding Instruction call
         self.branchtable[MUL] = self.handle_MUL        #/
         self.branchtable[HLT] = self.handle_HLT       #/
         self.branchtable[CALL] = self.handle_CALL    #/
